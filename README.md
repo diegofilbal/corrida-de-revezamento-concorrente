@@ -1,7 +1,7 @@
 # ConCorrida de Revezamento
 
 ## Sobre
-Este é um projeto realizado para a disciplina de Programação Concorrente, do curso de Bacharelado em Tecnologia da Informação, da UFRN, e tem como objetivo implementar um programa que simule uma Corrida de Revezamento usando conceitos de programação concorrente na linguagem Go.
+Projeto realizado para a terceira unidade da disciplina de Programação Concorrente (DIM0124), ministrada pelo Prof. Dr. Everton Ranielly de Sousa Cavalcante, do curso de Bacharelado em Tecnologia da Informação, da UFRN. Consiste em implementar um programa que simule uma Corrida de Revezamento usando conceitos de programação concorrente na linguagem Go. Para mais informações, acesse o [arquivo de instruções](https://github.com/diegofilbal/corrida-de-revezamento-concorrente/blob/main/docs/Trabalho%20III.pdf) do projeto disponibilizado pelo professor.
 
 ## Instruções de execução
 
