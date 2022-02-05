@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Valor em milisegundos
-const tempoCorrida = time.Duration(250)
+// Constante da duração das corridas (em milisegundos)
+const tempoCorrida = time.Duration(2000)
 
 func corredor (recebeBastao, entregaBastao chan time.Duration, idCorredor, idEquipe int, ordemChegada chan int, wgCorredores *sync.WaitGroup, mutex *sync.Mutex){
 	// Recebe por meio do canal a duração da corrida atual
