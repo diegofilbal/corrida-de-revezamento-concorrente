@@ -6,12 +6,10 @@ import (
 	"time"
 )
 
-var wgCorredores, wgEquipes sync.WaitGroup
-var mutex sync.Mutex
-
+// Valor em milisegundos
 const tempoCorrida = time.Duration(250)
 
-func corredor (recebeBastao, entregaBastao chan time.Duration, idCorredor, idEquipe int, ordemChegada chan int){
+func corredor (recebeBastao, entregaBastao chan time.Duration, idCorredor, idEquipe int, ordemChegada chan int, wgCorredores *sync.WaitGroup, mutex *sync.Mutex){
 	// Recebe por meio do canal a duração da corrida atual
 	tempo := <- recebeBastao
 
@@ -23,7 +21,6 @@ func corredor (recebeBastao, entregaBastao chan time.Duration, idCorredor, idEqu
 	if idCorredor != 4 {
 		fmt.Printf("Equipe %d: corredor %d terminou a corrida e está entregando o bastão para o corredor %d.\n", idEquipe, idCorredor, idCorredor+1)
 	} else {
-		// Mutex utilizado para que as goroutines escrevam na saída padrão na mesma ordem em que escreveram no canal
 		mutex.Lock()
 		ordemChegada <- idEquipe
 		fmt.Printf("Equipe %d: corredor %d terminou a corrida.\n", idEquipe, idCorredor)
@@ -35,7 +32,14 @@ func corredor (recebeBastao, entregaBastao chan time.Duration, idCorredor, idEqu
 	wgCorredores.Done()
 }
 
-func equipe (idEquipe int, ordemChegada chan int) {
+func equipe (idEquipe int, ordemChegada chan int, wgEquipes *sync.WaitGroup) {
+	// Grupo para aguardar os corredores da equipe terminarem de correr   
+	var wgCorredores sync.WaitGroup
+
+	// Mutex utilizado para que as goroutines escrevam na saída padrão na mesma ordem em que escreveram no canal de ordem de chegada
+	var mutex sync.Mutex
+	
+
 	// Canais para simular a passagem do bastão entre os corredores da equipe e repassar a duração da corrida
 	largada, umParaDois, doisParaTres, tresParaQuatro, chegada := make(chan time.Duration), make(chan time.Duration), make(chan time.Duration), make(chan time.Duration), make(chan time.Duration)
 
@@ -50,36 +54,38 @@ func equipe (idEquipe int, ordemChegada chan int) {
 	}()
 
 	wgCorredores.Add(4)
-	go corredor(largada, umParaDois, 1, idEquipe, ordemChegada)
-	go corredor(umParaDois, doisParaTres, 2, idEquipe, ordemChegada)
-	go corredor(doisParaTres, tresParaQuatro, 3, idEquipe, ordemChegada)
-	go corredor(tresParaQuatro, chegada, 4, idEquipe, ordemChegada)
+	go corredor(largada, umParaDois, 1, idEquipe, ordemChegada, &wgCorredores, &mutex)
+	go corredor(umParaDois, doisParaTres, 2, idEquipe, ordemChegada, &wgCorredores, &mutex)
+	go corredor(doisParaTres, tresParaQuatro, 3, idEquipe, ordemChegada, &wgCorredores, &mutex)
+	go corredor(tresParaQuatro, chegada, 4, idEquipe, ordemChegada, &wgCorredores, &mutex)
 	wgCorredores.Wait()
 
 	wgEquipes.Done()
 }
 
 func main(){
-	var qtd int
+	// Grupo para aguardar todas as equipes terminarem a corrida
+	var wgEquipes sync.WaitGroup
+
+	var qtdEquipes int
 	fmt.Print("Digite a quantidade de equipes participantes: ")
-	fmt.Scan(&qtd)
+	fmt.Scan(&qtdEquipes)
 	fmt.Println()
 
 	// Aloca dinamicamente o canal bufferizado para armazenar a ordem de chegada
-	ordemChegada := make(chan int, qtd)
+	ordemChegada := make(chan int, qtdEquipes)
 
 	// Momento de largada
-	for i := 1; i <= qtd; i++ {
+	for i := 1; i <= qtdEquipes; i++ {
 		wgEquipes.Add(1)
-		go equipe(i, ordemChegada)
+		go equipe(i, ordemChegada, &wgEquipes)
 	}
 	wgEquipes.Wait()
 
 	close(ordemChegada)
 
 	fmt.Println("\nOrdem de chegada das equipes:")
-	for i := 1; i <= qtd; i++ {
+	for i := 1; i <= qtdEquipes; i++ {
 		fmt.Printf("#%d - Equipe %d\n", i, <- ordemChegada)
 	}
-
 }
